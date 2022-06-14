@@ -1,0 +1,23 @@
+{
+  "projects": {
+    "default": "scope-test-20326",
+    "pro": "scope-237409",
+    "dev": "scope-test-20326"
+  },
+  "targets": {
+    "scope-test-20326": {
+      "hosting": {
+        "www": [
+          "scope-test-20326"
+        ]
+      }
+    },
+    "scope-237409": {
+      "hosting": {
+        "www": [
+          "scope-237409"
+        ]
+      }
+    }
+  }
+}

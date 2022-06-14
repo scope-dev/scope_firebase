@@ -1,0 +1,23 @@
+{
+  "name": "test",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite --mode localtest",
+    "watch": "vite --watch --mode localtest",
+    "build": "vite build --mode localtest",
+    "build-dev": "vite build --mode development --report",
+    "build-pro": "vite build --mode production"
+  },
+  "dependencies": {
+    "chart.js": "^3.8.0",
+    "firebase": "^9.8.2",
+    "vue": "^3.2.13",
+    "vue-chartjs": "^4.1.1",
+    "vue-router": "^4.0.13"
+  },
+  "devDependencies": {
+    "@vue/compiler-sfc": "^3.0.4",
+    "tracer": "^1.1.5",
+    "vite": "^1.0.0-rc.13"
+  }
+}
