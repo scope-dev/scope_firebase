@@ -1,53 +1,48 @@
-<template>
-  <div id="home">
-    <ul class="collection with-header">
-      <li>テスト</li>
-    </ul>
-  </div>
-</template>
-
 <script lang="ts">
 //import { console } from "tracer";
 //const log = console.colorConsole();
 console.debug("test");
 import {
-  computed,
   defineComponent,
   ref,
   reactive,
+  computed,
   watchEffect,
   onMounted,
 } from "vue";
 
 import firebase from "../firebase/firebaseInit";
-import "firebase/firestore";
+import {
+  getFirestore,
+  addDoc,
+  collection,
+  serverTimestamp,
+  getDocs,
+} from "firebase/firestore";
+
+const db = getFirestore(firebase);
 
 export default defineComponent({
   setup() {
-    console.log("MODE: " + import.meta.env.MODE);
-    console.log(firebase);
-    const firestore = firebase.firestore();
-    const load = async () => {
-      try {
-        firestore
-          .collection("comments")
-          .get()
-          .then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-              console.log(`${doc.id} => ${doc.data()}`);
-              //this.data.push(doc.data().name)
-            });
-          });
-
-        // const commentQuery = await getDocs(commentsDB);
-        // const comments = commentQuery.docs.map((doc) => doc.data());
-        // console.log(comments);
-        //makers = cityList;
-      } catch (err) {
-        console.log(err);
-      }
+    const comments = ref([]);
+    onMounted(async () => {
+      const res = await getDocs(collection(db, "comments"));
+      res.forEach((docs: QueryDocumentSnapshot) => {
+        comments.value = docs.data();
+      });
+      console.log(comments);
+    });
+    return {
+      comments,
     };
-    load();
   },
 });
 </script>
+
+<template>
+  <div id="home">
+    <ul class="collection with-header">
+      <li>{{ comments }}</li>
+    </ul>
+  </div>
+</template>
