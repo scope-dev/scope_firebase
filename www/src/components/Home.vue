@@ -19,14 +19,17 @@ import {
   onMounted,
 } from "vue";
 
-import { projectFirestore } from "../firebase/firebaseInit";
+import firebase from "../firebase/firebaseInit";
+import "firebase/firestore";
+
 export default defineComponent({
   setup() {
     console.log("MODE: " + import.meta.env.MODE);
-
+    console.log(firebase);
+    const firestore = firebase.firestore();
     const load = async () => {
       try {
-        projectFirestore
+        firestore
           .collection("comments")
           .get()
           .then((querySnapshot) => {
