@@ -6,29 +6,28 @@ import {
   defineComponent,
   ref,
   reactive,
+  toRefs,
   computed,
   watchEffect,
   onMounted,
 } from "vue";
 
-import firebase from "../firebase/firebaseInit";
+import firebaseDb from "../firebase/firestore/init";
 import {
-  getFirestore,
   addDoc,
   collection,
   serverTimestamp,
   getDocs,
 } from "firebase/firestore";
 
-const db = getFirestore(firebase);
-
 export default defineComponent({
   setup() {
     const comments = ref([]);
     onMounted(async () => {
-      const res = await getDocs(collection(db, "comments"));
+      const res = await getDocs(collection(firebaseDb, "comments"));
       res.forEach((docs: QueryDocumentSnapshot) => {
-        comments.value = docs.data();
+        //comments.value = docs.data();
+        comments.value.push(toRefs(docs.data()));
       });
       console.log(comments);
     });

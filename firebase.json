@@ -13,9 +13,6 @@
       }
     ]
   },
-  "database": {
-    "rules": "database.rules.json"
-  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
@@ -34,30 +31,32 @@
     "ui": {
       "enabled": true,
       "port": 9999,
-      "host": "0.0.0.0"
+      "host": "localhost"
     },
     "auth": {
       "port": 9099,
-      "host": "0.0.0.0"
+      "host": "localhost"
     },
     "functions": {
       "port": 5001,
-      "host": "0.0.0.0"
+      "host": "localhost"
     },
     "firestore": {
       "port": 8080,
-      "host": "0.0.0.0"
+      "host": "localhost"
     },
     "hosting": {
       "port": 5000,
-      "host": "0.0.0.0"
+      "host": "localhost",
+      "ssl": true,
+      "rewrites": [ {
+        "source": "/neSession",
+        "function": "neSession"
+      } ]
     },
     "pubsub": {
       "port": 8085,
-      "host": "0.0.0.0"
-    },
-    "database": {
-      "port": 9000
+      "host": "localhost"
     },
     "storage": {
       "port": 9199
