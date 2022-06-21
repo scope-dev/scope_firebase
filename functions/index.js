@@ -7,14 +7,14 @@ const settings = { timestampsInSnapshots: true };
 db.settings(settings);
 
 const funcs = {
-  neSession: './func/neSession'
+  neGetUid: './func/neGetUid',
+  neGetKey: './func/neGetKey'
 };
 
 const loadFunctions = (funcsObj) => {
   console.log('loadFunctions ' + process.env.FUNCTION_TARGET);
   for (const name in funcsObj) {
     // 全文じゃなくて前方一致にする
-    // if (!process.env.FUNCTION_TARGET || process.env.FUNCTION_TARGET === name) {
     if (!process.env.FUNCTION_TARGET || process.env.FUNCTION_TARGET.startsWith(name)) {
       exports[name] = require(funcsObj[name])
     }

@@ -13,13 +13,19 @@ export default defineConfig({
   server: {
     https:true,
     proxy: {
-      '/neSession': {
-           target: 'http://localhost:5001/scope-test-20326/us-central1/neSession',
+      '/neGetUid': {
+           target: 'http://localhost:5001/scope-test-20326/us-central1/neGetUid',
            changeOrigin: true,
            secure: false,      
            ws: true,
-       }
-  }
+       },
+      '/neGetKey': {
+        target: 'http://localhost:5001/scope-test-20326/us-central1/neGetKey',
+        changeOrigin: true,
+        secure: false,      
+        ws: true,
+      }
+    }
   },
   plugins: [vue(),mkcert()]
 })
