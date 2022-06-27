@@ -13,18 +13,12 @@ export default defineConfig({
   server: {
     https:true,
     proxy: {
-      '/neGetUid': {
-           target: 'http://localhost:5001/scope-test-20326/us-central1/neGetUid',
+      '/functions': {
+           target: 'http://localhost:5001/scope-test-20326/us-central1/',
            changeOrigin: true,
-           secure: false,      
-           ws: true,
-       },
-      '/neGetKey': {
-        target: 'http://localhost:5001/scope-test-20326/us-central1/neGetKey',
-        changeOrigin: true,
-        secure: false,      
-        ws: true,
-      }
+           rewrite: (path) => path.replace(/^\/functions/, ''),
+           secure: false
+       }
     }
   },
   plugins: [vue(),mkcert()]

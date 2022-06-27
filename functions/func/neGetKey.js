@@ -54,11 +54,14 @@ async function getKeys(par) {
 async function refreshKeys(par) {
   let queryStr = qs.stringify(par);
   const result = await axios.post(ne_api_host+path_cinfo,queryStr)
-  
-  //日本時間が返ってくるので-9時間して標準時に変換(判定はローカルマシンのロケールを使用)-32400000
-  result.data.access_token_end_date = Timestamp.fromMillis(Date.parse(result.data.access_token_end_date))
-  result.data.refresh_token_end_date = Timestamp.fromMillis(Date.parse(result.data.refresh_token_end_date))
-  return result.data
+  if(result.data.result == 'error'){
+    throw result.data.message
+  }else{
+    //日本時間が返ってくるので-9時間して標準時に変換(判定はローカルマシンのロケールを使用)-32400000
+    result.data.access_token_end_date = Timestamp.fromMillis(Date.parse(result.data.access_token_end_date))
+    result.data.refresh_token_end_date = Timestamp.fromMillis(Date.parse(result.data.refresh_token_end_date))
+    return result.data
+  }
 }
 
 async function setKeys(data) {
@@ -75,54 +78,29 @@ async function setKeys(data) {
 
 module.exports = functions.https.onRequest(async (req, res) => {
   try {
-
-    const url_parse = url.parse(req.url, true)
-    params = {...params , ...{'client_id': process.env.NE_CLIENT_ID}}
-    params = {...params , ...{'client_secret': process.env.NE_CLIENT_SECRET}}
-
-    if(url_parse.query.uid){ //ne認証ログイン後
-      console.log('from UID!')     
-
-      params = {...params , ...{'uid': url_parse.query.uid}}
-      params = {...params , ...{'state': url_parse.query.state}}
-      
-      getKeys(params).then((r)=>{
-        setKeys(r).then((m)=>{
-          res.json({
-            response:true,
-            message:"ne keyを保存しました"
-          })
-        })
-        .catch((err)=>{
-          res.json({
-            response:false,
-            message: err
-          })
-        })
-      })
+    if (res.method === 'OPTIONS') {
+      console.log('OPTIONS', req)
+      res.set('Access-Control-Allow-Headers', "authorization,content-type,application/json");
+      res.set('Access-Control-Allow-Origin', '*');
+      rse.status(204).send('');
+    } else {
         
-    }else{
-      const neKeys = await neKeysRef.get()
-      if(neKeys.exists){
-        const keys = await neKeys.data()
+      const url_parse = url.parse(req.url, true)
+      params = {...params , ...{'client_id': process.env.NE_CLIENT_ID}}
+      params = {...params , ...{'client_secret': process.env.NE_CLIENT_SECRET}}
+      res.set('Access-Control-Allow-Origin', '*');
+      if(url_parse.query.uid){ //ne認証ログイン後
+        console.log('from UID!')     
 
-        console.log("key有効期限")
-        console.log("now-",dateFnsFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'))
-        console.log("Accesskey-",dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
-        console.log("Refleshkey-",dateFnsFormat(keys.refresh_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
-        console.log("期限:",isAfter(keys.refresh_token_end_date.toMillis(), new Date()))
-        if(isAfter(keys.refresh_token_end_date.toMillis(), new Date())){  //リフレッシュ期限内か
-          console.log("期限有効")
-          params = {...params , ...{'access_token': keys.access_token}}
-          params = {...params , ...{'refresh_token': keys.refresh_token}}
-          refreshKeys(params).then((r)=>{
-            setKeys(r).then((m)=>{
-              res.json({
-                response:true,
-                message:"ne keyを保存しました"
-              })
+        params = {...params , ...{'uid': url_parse.query.uid}}
+        params = {...params , ...{'state': url_parse.query.state}}
+        
+        getKeys(params).then((r)=>{
+          setKeys(r).then((m)=>{
+            res.json({
+              response:true,
+              message:"ne keyを保存しました"
             })
-            
           })
           .catch((err)=>{
             res.json({
@@ -130,19 +108,57 @@ module.exports = functions.https.onRequest(async (req, res) => {
               message: err
             })
           })
+        })
+          
+      }else{
+        const neKeys = await neKeysRef.get()
+        if(neKeys.exists){
+          const keys = await neKeys.data()
 
-        }else{
-          console.log("期限切れ")
+          console.log("key有効期限")
+          console.log("now-",dateFnsFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'))
+          console.log("Accesskey-",dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
+          console.log("Refleshkey-",dateFnsFormat(keys.refresh_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
+          console.log("期限:",keys.refresh_token_end_date.toMillis() > new Date())
+          if(keys.refresh_token_end_date.toMillis() > new Date()){  //リフレッシュ期限内か
+            console.log("refresh期限有効")
+            params = {...params , ...{'access_token': keys.access_token}}
+            params = {...params , ...{'refresh_token': keys.refresh_token}}
+            refreshKeys(params).then((r)=>{
+              //console.log(r)
+              setKeys(r).then((m)=>{
+                res.json({
+                  response:true,
+                  message:"ne keyを保存しました"
+                })
+              })
+              .catch((err)=>{
+                res.json({
+                  response:false,
+                  message: err
+                })
+              })
+            })
+            .catch((err)=>{
+              res.json({
+                response:false,
+                message: err
+              })
+            })
+
+          }else{
+            console.log("期限切れ")
+            redirectUrl(req).then((r)=>{
+              res.redirect(r)
+            })
+          }
+        }else{ //accesskeyが保存されていない場合
+          console.log('configなし初回')
           redirectUrl(req).then((r)=>{
+            console.log('url-> ',r)
             res.redirect(r)
           })
         }
-      }else{ //accesskeyが保存されていない場合
-        console.log('configなし初回')
-        redirectUrl(req).then((r)=>{
-          console.log('url-> ',r)
-          res.redirect(r)
-        })
       }
     }
   } catch (err) { 

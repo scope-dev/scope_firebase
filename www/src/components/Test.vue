@@ -1,54 +1,43 @@
-<template>
-  <div id="home">
-    <ul class="collection with-header">
-      <li>テストです</li>
-    </ul>
-  </div>
-</template>
-
 <script lang="ts">
-//import { console } from "tracer";
-//const log = console.colorConsole();
-console.debug("test");
+import { useStore } from "vuex";
 import {
-  computed,
   defineComponent,
   ref,
   reactive,
+  toRefs,
+  computed,
   watchEffect,
   onMounted,
 } from "vue";
 
-import firebaseinit from "../firebase/firebaseInit";
-import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
-const db = getFirestore(firebaseinit);
+import firebaseDb from "../firebase/firestore/init";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  getDocs,
+} from "firebase/firestore";
+
 export default defineComponent({
   setup() {
-    console.log(import.meta.env.MODE);
-    // data
-    let makers = reactive<{ id: number; name: string }[]>([
-      {
-        id: 1,
-        name: "aio",
-      },
-      {
-        id: 2,
-        name: "gtr",
-      },
-    ]);
-    console.log(makers);
-    const commentsDB = collection(db, "comments");
-    const load = async () => {
-      try {
-        const commentQuery = await getDocs(commentsDB);
-        const comments = commentQuery.docs.map((doc) => doc.data());
-        console.log(comments);
-        //makers = cityList;
-      } catch (err) {
-        console.log(err);
-      }
+    const store = useStore();
+    const comments = ref([]);
+    onMounted(async () => {
+      return true;
+    });
+    return {
+      keyExpired: computed(() => store.state.keyExpired),
     };
-    load();
   },
 });
 </script>
+
+<template>
+  <div id="home">
+    <router-link to="/">Go to Top</router-link>
+
+    <span class="count">
+      {{ keyExpired }}
+    </span>
+  </div>
+</template>

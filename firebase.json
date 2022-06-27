@@ -10,6 +10,10 @@
       {
         "source": "**",
         "destination": "/index.html"
+      },
+      {
+        "source": "/functions/neGetKey",
+        "function": "neGetKey"
       }
     ]
   },
