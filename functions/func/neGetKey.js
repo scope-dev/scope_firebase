@@ -2,7 +2,6 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const FieldValue = admin.firestore.FieldValue
 const Timestamp = admin.firestore.Timestamp
-const https = require('https')
 const url = require('url')
 const qs = require('qs')
 const db = admin.firestore()
@@ -30,14 +29,15 @@ if (process.env.FUNCTIONS_EMULATOR) {
   http = 'https://'
 }
 
-async function redirectUrl(req) {
-  const ne_base_host = 'https://base.next-engine.org'
-  const path_sign = '/users/sign_in/'
-  redirect_url = http + req.headers.host + '/' + process.env.GCLOUD_PROJECT + '/' + REGION + '/neGetKey'
-  const ne_signin_url = `${ne_base_host}${path_sign}?client_id=${process.env.NE_CLIENT_ID}&redirect_uri=${redirect_url}`
-  console.log('Redirect !!', ne_signin_url)
-  return ne_signin_url
-}
+// async function redirectUrl(req) {
+//   const ne_base_host = 'https://base.next-engine.org'
+//   const path_sign = '/users/sign_in/'
+//   redirect_url = http + req.headers.host + '/' + process.env.GCLOUD_PROJECT + '/' + REGION + '/neGetKey'
+//   const ne_signin_url = `${ne_base_host}${path_sign}?client_id=${process.env.NE_CLIENT_ID}&redirect_uri=${redirect_url}`
+//   functions.logger.log('Redirect !!')
+//   console.log('Redirect !!')
+//   return ne_signin_url
+// }
 
 async function getKeys(par) {
   let queryStr = qs.stringify(par);
@@ -66,111 +66,63 @@ async function refreshKeys(par) {
 }
 
 async function setKeys(data) {
-    await neKeysRef.set(data)
+    return await neKeysRef.set(data)
     .then((res)=>{
+      functions.logger.log('Set Keys')
       console.log('Set Keys')
-      return res
+      return true
     })
     .catch((err)=>{
-      console.log('Set Keys', err)
-      return err
+      functions.logger.log('not Set Keys', err)
+      console.log('not Set Keys', err)
+      return false
     })
 }
 
-module.exports = functions.region(REGION).https.onRequest(async (req, res) => {
+module.exports = functions.region(REGION).https.onCall(async (data, context) => {
   try {
-    if (res.method === 'OPTIONS') {
-      console.log('OPTIONS', req)
-      res.set('Access-Control-Allow-Headers', "authorization,content-type,application/json");
-      res.set('Access-Control-Allow-Origin', '*');
-      rse.status(204).send('');
-    } else {
-        
-      const url_parse = url.parse(req.url, true)
-      params = {...params , ...{'client_id': process.env.NE_CLIENT_ID}}
-      params = {...params , ...{'client_secret': process.env.NE_CLIENT_SECRET}}
-      res.set('Access-Control-Allow-Origin', '*');
-      if(url_parse.query.uid){ //ne認証ログイン後
-        console.log('from UID!')     
-
-        params = {...params , ...{'uid': url_parse.query.uid}}
-        params = {...params , ...{'state': url_parse.query.state}}
-        
-        getKeys(params).then((r)=>{
-          setKeys(r).then((m)=>{
-            res.redirect(process.env.SERVICE_HOST)
-          })
-          .catch((err)=>{
-            res.json({
-              response:false,
-              message: err
-            })
-          })
-        })
-          
-      }else{
-        const neKeys = await neKeysRef.get()
-        if(neKeys.exists){
-          const keys = await neKeys.data()
-
-          console.log("key有効期限")
-          console.log("now-",dateFnsFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'))
-          console.log("Accesskey-",dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
-          console.log("Refleshkey-",dateFnsFormat(keys.refresh_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
-          console.log("期限:",keys.refresh_token_end_date.toMillis() > new Date())
-          if(keys.refresh_token_end_date.toMillis() > new Date()){  //リフレッシュ期限内か
-            console.log("refresh期限有効")
-            params = {...params , ...{'access_token': keys.access_token}}
-            params = {...params , ...{'refresh_token': keys.refresh_token}}
-            refreshKeys(params).then((r)=>{
-              //console.log(r)
-              setKeys(r).then((m)=>{
-                res.json({
-                  response:true,
-                  message:"ne keyを保存しました"
-                })
-              })
-              .catch((err)=>{
-                res.json({
-                  response:false,
-                  message: err
-                })
-              })
-            })
-            .catch((err)=>{
-              res.json({
-                response:false,
-                message: err
-              })
-            })
-
-          }else{
-            console.log("期限切れ")
-            redirectUrl(req).then((r)=>{
-              console.log(r)
-              res.json({
-                response:false,
-                redirect: r,
-                message: "Please Redirect:"
-              })
-            })
+    const neKeys = await neKeysRef.get()
+    if(neKeys.exists){
+      const keys = await neKeys.data()
+      console.log("now-",dateFnsFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'))
+      console.log("Accesskey-",dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
+      console.log("Refleshkey-",dateFnsFormat(keys.refresh_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
+      console.log("期限:",keys.refresh_token_end_date.toMillis() > new Date())
+      if(keys.refresh_token_end_date.toMillis() > new Date()){  //リフレッシュ期限内か
+        console.log("refresh期限有効")
+        params = {...params , ...{'access_token': keys.access_token}}
+        params = {...params , ...{'refresh_token': keys.refresh_token}}
+        let new_key = await refreshKeys(params)
+        let res = await setKeys(new_key)
+        if(res){
+          return {
+            status:200,
+            message:"ne keyを保存しました"
           }
-        }else{ //accesskeyが保存されていない場合
-          console.log('configなし初回')
-          redirectUrl(req).then((r)=>{
-            res.json({
-              response:false,
-              redirect: r,
-              message: "Please Redirect:"
-            })
-          })
+        }else{
+          return {
+            status:false,
+            message: err
+          }
         }
+      }else{
+        console.log("期限切れ")
+        return {
+          status:302,
+          message: "Please Redirect:"
+        }
+      }
+    }else{ //accesskeyが保存されていない場合
+      console.log('configなし初回')
+      return {
+        status:302,
+        message: "Please Redirect:"
       }
     }
   } catch (err) { 
-    res.json({
-      response:false,
+    return {
+      status:false,
       message: err
-    })
+    }
   }
 })

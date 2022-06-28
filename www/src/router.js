@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory} from 'vue-router'
 import store from '@/store/index';
+import functionsCall from "@/firebase/functions/callable";
 
 import Home from '@/components/Home.vue'
 import Test from '@/components/Test.vue'
@@ -22,30 +23,20 @@ export const router = createRouter({
 
 //全てのページ遷移で実行される関数
 router.beforeEach((to, from, next) => {
-  store.dispatch('expiredcheck').then((r)=>{
-  if (!store.state.keyExpired) {
-    let url = '/functions/neGetKey'
-    fetch(url)
-    .then(function (data) {
-      return data.json()
-    })
-    .then(function (json) {
-      console.log(json)
-      if(json.response){
-        next({path: '/', query: { message: json.message }})
-      }else if(json.redirect){
-        window.location.href = json.redirect
-        next('/')
-        //this.$router.push("/function/neGetUid")
-      }else{
+  store.dispatch('expiredcheck').then(async ()=>{
+    if (!store.state.keyExpired) {
+      let res = await functionsCall.callNeGetKey()
+      console.log('in router- ', res)
+      if(res.status == 200){
+        next({path: '/', query: { message: res.message }})
+      }else if(res.status == 302){
+        window.location.href = "/functions/neGetUid"
         next()
+      }else{
+        next({path: '/', query: { message: '認証エラー' }})
       }
-    }).catch((e)=>{
-      console.log(e)
+    }else{
       next()
-    })
-  }else{
-    next()
     }
   })
   

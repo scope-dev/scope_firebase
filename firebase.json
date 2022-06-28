@@ -8,10 +8,6 @@
     ],
     "rewrites": [
       {
-        "source": "/functions/neGetKey",
-        "function": "neGetKey"
-      },
-      {
         "source": "/functions/neGetUid",
         "function": "neGetUid"
       },

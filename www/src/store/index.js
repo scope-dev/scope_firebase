@@ -34,8 +34,8 @@ const store = createStore({
           return false
         }
       }else{ //config keyなし
-        console.log(location)
-        let redirect_url = location.origin + '/functions/neGetUid'
+        //localhostの場合はemulator functionsがhttpなのでproxyを使用する
+        let redirect_url = location.origin.includes('localhost') ? location.origin + '/functions/neGetUid' : import.meta.env.VITE_FIB_FUNC_URL + '/neGetUid'        
         window.location.href = redirect_url
         return false
       }
