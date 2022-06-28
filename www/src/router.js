@@ -30,14 +30,23 @@ router.beforeEach((to, from, next) => {
       return data.json()
     })
     .then(function (json) {
-      console.log(json.message)
+      console.log(json)
       if(json.response){
         next({path: '/', query: { message: json.message }})
+      }else if(json.redirect){
+        window.location.href = json.redirect
+        next('/')
+        //this.$router.push("/function/neGetUid")
+      }else{
+        next()
       }
+    }).catch((e)=>{
+      console.log(e)
+      next()
     })
+  }else{
     next()
-  }
-  next()
+    }
   })
   
 })

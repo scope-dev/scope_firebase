@@ -19,22 +19,23 @@ const ne_api_host = 'https://api.next-engine.org'
 const path_auth = '/api_neauth'
 const path_cinfo = '/api_v1_login_company/info'
 
+let REGION = undefined
+let redirect_url = ''
+  //Emulator判定
+if (process.env.FUNCTIONS_EMULATOR) {
+  REGION = 'us-central1'
+  http = 'http://'
+}else{
+  REGION = 'asia-northeast1'
+  http = 'https://'
+}
 
 async function redirectUrl(req) {
-  console.log('Redirect !!')
   const ne_base_host = 'https://base.next-engine.org'
   const path_sign = '/users/sign_in/'
-  let redirect_url = ''
-  let REGION = ''
-  if (process.env.FUNCTIONS_EMULATOR) {
-    REGION = 'us-central1'
-    redirect_url = 'http://'
-  }else{
-    REGION = 'asia-northeast1'
-    redirect_url = 'https://'
-  }
-  redirect_url += req.headers.host + '/' + process.env.GCLOUD_PROJECT + '/' + REGION + '/neGetKey'
+  redirect_url = http + req.headers.host + '/' + process.env.GCLOUD_PROJECT + '/' + REGION + '/neGetKey'
   const ne_signin_url = `${ne_base_host}${path_sign}?client_id=${process.env.NE_CLIENT_ID}&redirect_uri=${redirect_url}`
+  console.log('Redirect !!', ne_signin_url)
   return ne_signin_url
 }
 
@@ -76,7 +77,7 @@ async function setKeys(data) {
     })
 }
 
-module.exports = functions.https.onRequest(async (req, res) => {
+module.exports = functions.region(REGION).https.onRequest(async (req, res) => {
   try {
     if (res.method === 'OPTIONS') {
       console.log('OPTIONS', req)
@@ -97,10 +98,7 @@ module.exports = functions.https.onRequest(async (req, res) => {
         
         getKeys(params).then((r)=>{
           setKeys(r).then((m)=>{
-            res.json({
-              response:true,
-              message:"ne keyを保存しました"
-            })
+            res.redirect(process.env.SERVICE_HOST)
           })
           .catch((err)=>{
             res.json({
@@ -149,14 +147,22 @@ module.exports = functions.https.onRequest(async (req, res) => {
           }else{
             console.log("期限切れ")
             redirectUrl(req).then((r)=>{
-              res.redirect(r)
+              console.log(r)
+              res.json({
+                response:false,
+                redirect: r,
+                message: "Please Redirect:"
+              })
             })
           }
         }else{ //accesskeyが保存されていない場合
           console.log('configなし初回')
           redirectUrl(req).then((r)=>{
-            console.log('url-> ',r)
-            res.redirect(r)
+            res.json({
+              response:false,
+              redirect: r,
+              message: "Please Redirect:"
+            })
           })
         }
       }

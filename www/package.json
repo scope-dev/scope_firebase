@@ -5,7 +5,7 @@
     "dev": "vite --mode localtest",
     "watch": "vite --watch --mode localtest",
     "build": "vite build --mode localtest",
-    "build-dev": "vite build --mode development --report",
+    "build-dev": "vite build --mode development",
     "build-pro": "vite build --mode production"
   },
   "dependencies": {

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "kill": "lsof -ti:8085 | xargs kill -9 & lsof -ti:8080 | xargs kill -9 & lsof -ti:9999 | xargs kill -9",
     "dev": "firebase emulators:start --import=./data",
     "emu": "firebase emulators:start --import=./data && firebase serve --host 0.0.0.0",
     "deploy-dev": "cd www && npm run build-dev && firebase use dev && firebase deploy",
