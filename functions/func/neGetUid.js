@@ -12,7 +12,6 @@ var params = {}
 
 const ne_base_host = 'https://base.next-engine.org'
 const path_sign = '/users/sign_in/'
-let redirect_url = ''
 
 const ne_api_host = 'https://api.next-engine.org'
 const path_auth = '/api_neauth'
@@ -45,12 +44,10 @@ async function setKeys(data) {
   return await neKeysRef.set(data)
   .then((res)=>{
     functions.logger.log('Set Keys')
-    console.log('Set Keys')
     return res
   })
   .catch((err)=>{
     functions.logger.log('not Set Keys', err)
-    console.log('not Set Keys', err)
     return err
   })
 }
@@ -62,7 +59,6 @@ module.exports = functions.region(REGION).https.onRequest(async (req, res) => {
     params = {...params , ...{'client_secret': process.env.NE_CLIENT_SECRET}}
     if(url_parse.query.uid){ //ne認証ログイン後
       functions.logger.log('from UID!')
-      console.log('from UID!')     
 
       params = {...params , ...{'uid': url_parse.query.uid}}
       params = {...params , ...{'state': url_parse.query.state}}
@@ -78,11 +74,9 @@ module.exports = functions.region(REGION).https.onRequest(async (req, res) => {
         })
       })
     } else {
-      //リダイレクトURLの作成
-      redirect_url = http + req.headers.host + '/' + process.env.GCLOUD_PROJECT + '/' + REGION + '/neGetUid'
-
-      const ne_signin_url = `${ne_base_host}${path_sign}?client_id=${process.env.NE_CLIENT_ID}&redirect_uri=${redirect_url}`
-      res.redirect(ne_signin_url);
+      //戻り先は app host /functions/neGetUid
+      const ne_signin_url = `${ne_base_host}${path_sign}?client_id=${process.env.NE_CLIENT_ID}`
+      functions.logger.log("ne_signin_url:", ne_signin_url);
     }
   } catch (err) { 
     console.log('catch error', err)
