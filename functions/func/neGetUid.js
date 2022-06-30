@@ -77,6 +77,7 @@ module.exports = functions.region(REGION).https.onRequest(async (req, res) => {
       //戻り先は app host /functions/neGetUid
       const ne_signin_url = `${ne_base_host}${path_sign}?client_id=${process.env.NE_CLIENT_ID}`
       functions.logger.log("ne_signin_url:", ne_signin_url);
+      res.redirect(ne_signin_url);
     }
   } catch (err) { 
     console.log('catch error', err)
