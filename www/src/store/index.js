@@ -10,9 +10,6 @@ const store = createStore({
     }
   },
   mutations: {
-    increment (state) {
-      state.count++
-    },
     setExpire (state, data) {
       state.keyExpired = data.response
     }
@@ -27,10 +24,14 @@ const store = createStore({
         if(utc_now < keys.access_token_end_date.toMillis() ){
           //console.log('期限内')
           commit('setExpire',{response: true})
+          localStorage.setItem('at',keys.access_token)
+          localStorage.setItem('rt',keys.refresh_token)
           return true
         }else{
           //console.log('期限切れ')
           commit('setExpire',{response: false})
+          localStorage.removeItem('at');
+          localStorage.removeItem('rt');
           return false
         }
       }else{ //config keyなし

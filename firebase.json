@@ -12,6 +12,10 @@
         "function": "neGetUid"
       },
       {
+        "source": "/ne_api/",
+        "destination": "https://api.next-engine.org"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

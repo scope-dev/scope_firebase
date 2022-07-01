@@ -18,7 +18,13 @@ export default defineConfig({
            changeOrigin: true,
            rewrite: (path) => path.replace(/^\/functions/, ''),
            secure: false
-       }
+      },
+      '/ne_api': {
+        target: 'https://api.next-engine.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ne_api/, ''),
+        secure: false
+      }
     }
   },
   plugins: [vue(),mkcert()]
