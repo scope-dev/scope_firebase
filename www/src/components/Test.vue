@@ -15,8 +15,9 @@ import {
 import axios from "axios";
 import qs from "qs";
 
+const isEmulating = window.location.hostname === "localhost";
+
 const store = useStore();
-const comments = ref([]);
 let orders = ref();
 let product_id = ref();
 
@@ -33,8 +34,14 @@ const getOrders = () => {
     'stock_io_history_goods_id-like':product_id.value, //"iia86a11111"
   };
   let queryStr = qs.stringify(par);
+  console.log(queryStr)
+  
+  let baseURL = 'https://api.next-engine.org/'
+  if (isEmulating) {
+    baseURL =  '/ne_api/'
+  }
   axios
-    .post("/ne_api/api_v1_master_stockiohistory/search", queryStr)
+    .post( baseURL +"api_v1_master_stockiohistory/search", queryStr)
     .then((res) => {
       console.log(res);
       orders.value = res;

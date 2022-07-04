@@ -26,7 +26,6 @@ if (process.env.FUNCTIONS_EMULATOR) {
 }else{
   http = 'https://'
 }
-
 async function getKeys(par) {
   let queryStr = qs.stringify(par);
   const response = await axios.post(ne_api_host+path_auth,queryStr)

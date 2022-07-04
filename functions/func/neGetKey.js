@@ -20,7 +20,9 @@ const path_cinfo = '/api_v1_login_company/info'
 
 let REGION = undefined
 let redirect_url = ''
-  //Emulator判定
+
+//Emulator判定
+functions.logger.log('process.env.FUNCTIONS_EMULATOR:', process.env.FUNCTIONS_EMULATOR)
 if (process.env.FUNCTIONS_EMULATOR) {
   REGION = 'us-central1'
   http = 'http://'
