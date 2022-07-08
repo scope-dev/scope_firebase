@@ -58,7 +58,9 @@ async function refreshKeys(par) {
   let queryStr = qs.stringify(par);
   const result = await axios.post(ne_api_host+path_cinfo,queryStr)
   if(result.data.result == 'error'){
-    throw result.data.message
+    functions.logger.log(result.data)
+    //console.log(result.data)
+    return result.data
   }else{
     //日本時間が返ってくるので-9時間して標準時に変換(判定はローカルマシンのロケールを使用)-32400000
     result.data.access_token_end_date = Timestamp.fromMillis(Date.parse(result.data.access_token_end_date))
@@ -86,35 +88,47 @@ module.exports = functions.region(REGION).https.onCall(async (data, context) => 
     const neKeys = await neKeysRef.get()
     if(neKeys.exists){
       const keys = await neKeys.data()
-      console.log("now-",dateFnsFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'))
-      console.log("Accesskey-",dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
-      console.log("Refleshkey-",dateFnsFormat(keys.refresh_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
-      console.log("期限:",keys.refresh_token_end_date.toMillis() > new Date())
+      // console.log("now-",dateFnsFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'))
+      // console.log("Accesskey-",dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
+      // console.log("Refleshkey-",dateFnsFormat(keys.refresh_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
+      // console.log("期限:",keys.refresh_token_end_date.toMillis() > new Date())
       if(keys.refresh_token_end_date.toMillis() > new Date()){  //リフレッシュ期限内か
         console.log("refresh期限有効")
         params = {...params , ...{'access_token': keys.access_token}}
         params = {...params , ...{'refresh_token': keys.refresh_token}}
-        let new_key = await refreshKeys(params)
-        let res = await setKeys(new_key)
-        if(res){
-          return {
-            status:200,
-            message:"ne keyを保存しました"
+        return await refreshKeys(params)
+        .then(async (new_key)=>{
+          let res = await setKeys(new_key)
+          //console.log(res)
+          if(res){
+            return {
+              status:200,
+              message:"ne keyを保存しました"
+            }
+          }else{
+            return {
+              status:false,
+              message: err
+            }
           }
-        }else{
+        })
+        .catch((err)=>{
           return {
             status:false,
             message: err
           }
-        }
+        })
+        
       }else{
-        console.log("期限切れ")
+      functions.logger.log("期限切れ")
+      console.log("期限切れ")
         return {
           status:302,
           message: "Please Redirect:"
         }
       }
     }else{ //accesskeyが保存されていない場合
+      functions.logger.log('configなし初回')
       console.log('configなし初回')
       return {
         status:302,

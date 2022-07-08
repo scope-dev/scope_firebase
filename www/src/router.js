@@ -4,6 +4,7 @@ import functionsCall from "@/firebase/functions/callable";
 
 import Home from '@/components/Home.vue'
 import Test from '@/components/Test.vue'
+import Error from '@/components/Error.vue'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -18,6 +19,11 @@ export const router = createRouter({
       name: 'test',
       component: Test,
     },
+    {
+      path: '/error',
+      name: 'error',
+      component: Error,
+    },
   ]
 })
 
@@ -26,14 +32,16 @@ router.beforeEach((to, from, next) => {
   store.dispatch('expiredcheck').then(async ()=>{
     if (!store.state.keyExpired) {
       let res = await functionsCall.callNeGetKey()
-      console.log('in router- ', res)
+      // console.log('in router- ', res)
+      // console.log(res)
       if(res.status == 200){
         next({path: '/', query: { message: res.message }})
       }else if(res.status == 302){
         window.location.href = "/functions/neGetUid"
         next()
       }else{
-        next({path: '/', query: { message: '認証エラー' }})
+        //console.log('else')
+        next({path: '/error', query: { message: '認証エラー' }})
       }
     }else{
       next()

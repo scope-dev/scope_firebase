@@ -16,10 +16,11 @@ const store = createStore({
   },
   actions: {
     async expiredcheck({ commit, dispatch }) {
+      //console.log('expiredcheck')
       const keys = await query.getOne('config','ne_keys')
       const utc_now = Date.now() - new Date().getTimezoneOffset() * 60 * 1000
-      //console.log('utc_now', utc_now ,'<','ac_key ',keys.access_token_end_date.toMillis())
-      //console.log("utc_now",dateFnsFormat(utc_now, 'yyyy-MM-dd HH:mm:ss'), '<','ac_key ',dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
+      // console.log('utc_now', utc_now ,'<','ac_key ',keys.access_token_end_date.toMillis())
+      // console.log("utc_now",dateFnsFormat(utc_now, 'yyyy-MM-dd HH:mm:ss'), '<','ac_key ',dateFnsFormat(keys.access_token_end_date.toMillis(), 'yyyy-MM-dd HH:mm:ss'))
       if(keys){
         if(utc_now < keys.access_token_end_date.toMillis() ){
           //console.log('期限内')

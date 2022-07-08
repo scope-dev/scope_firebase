@@ -34,8 +34,6 @@ const getOrders = () => {
     'stock_io_history_goods_id-like':product_id.value, //"iia86a11111"
   };
   let queryStr = qs.stringify(par);
-  console.log(queryStr)
-  
   let baseURL = 'https://api.next-engine.org/'
   if (isEmulating) {
     baseURL =  '/ne_api/'
